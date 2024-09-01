@@ -1,17 +1,31 @@
 import requests
 from requests.exceptions import RequestException
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+art = '''
+
+⠀⠀⡶⠛⠲⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡶⠚⢶⡀⠀
+⢰⠛⠃⠀⢠⣏⠀⠀⠀⠀⣀⣠⣤⣤⣤⣤⣤⣤⣄⣀⡀⠀⠀⠀⣸⠇⠀⠈⠙⣧
+⠸⣦⣤⣄⠀⠙⢷⣤⣶⠟⠛⢉⣁⣤⣤⣤⣤⣀⣉⠙⠻⢷⣤⡾⠋⢀⣤⣤⣴⠏
+⠀⠀⠀⠈⠳⣤⡾⠋⣀⣴⣿⣿⠿⠿⠟⠛⠿⠿⣿⣿⣶⣄⠙⢿⣦⠟⠁⠀⠀⠀
+⠀⠀⠀⢀⣾⠟⢀⣾⣿⠟⠋⠀⠀⠀⠀⠀⠀⠀⠀⠉⠻⣿⣷⡄⠹⣷⡀⠀⠀⠀
+⠀⠀⠀⣾⡏⢠⣿⣿⡯⠤⠤⠤⠒⠒⠒⠒⠒⠒⠒⠤⠤⠽⣿⣿⡆⠹⣷⡀⠀⠀
+⠀⠀⢸⣟⣠⡿⠿⠟⠒⣒⣒⣉⣉⣉⣉⣉⣉⣉⣉⣉⣒⣒⡛⠻⠿⢤⣹⣇⠀⠀
+⠀⠀⣾⡭⢤⣤⣠⡞⠉⠁⢀⣀⣀⠀⠀⠀⠀⢀⣀⣀⠀⠈⢹⣦⣤⡤⠴⣿⠀⠀
+⠀⠀⣿⡇⢸⣿⣿⣇⠀⣼⣿⣿⣿⣷⠀⠀⣼⣿⣿⣿⣷⠀⢸⣿⣿⡇⠀⣿⠀⠀
+⠀⠀⢻⡇⠸⣿⣿⣿⡄⢿⣿⣿⣿⡿⠀⠀⢿⣿⣿⣿⡿⢀⣿⣿⣿⡇⢸⣿⠀⠀
+⠀⠀⠸⣿⡀⢿⣿⣿⣿⣆⠉⠛⠋⠀⢴⣶⠀⠉⠛⠉⣠⣿⣿⣿⡿⠀⣾⠇⠀⠀
+⠀⠀⠀⢻⣷⡈⢻⣿⣿⣿⣿⣶⣤⣀⣈⣁⣀⡤⣴⣿⣿⣿⣿⡿⠁⣼⠏⠀⠀⠀
+⠀⠀⠀⢀⣽⣷⣄⠙⢿⣿⣿⡟⢲⠧⡦⠼⠤⢷⢺⣿⣿⡿⠋⣠⣾⢿⣄⠀⠀⠀
+⣰⠟⠛⠛⠁⣨⡿⢷⣤⣈⠙⢿⡙⠒⠓⠒⠒⠚⡹⠛⢁⣤⣾⠿⣧⡀⠙⠋⠙⣆
+⠹⣤⡀⠀⠐⡏⠀⠀⠉⠛⠿⣶⣿⣶⣤⣤⣤⣾⣷⠾⠟⠋⠀⠀⢸⡇⠀⢠⣤⠟
+⠀⠀⠳⢤⠾⠃⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠁⠀⠀⠀⠀⠀⠀⠘⠷⠤⠾⠁⠀
+'''
+
+print(art)
 
 def check_accessibility(domain):
-    """
-    Checks the accessibility of a domain for both HTTP and HTTPS protocols.
-
-    Args:
-        domain (str): The domain to check.
-
-    Returns:
-        dict: A dictionary with the status of HTTP and HTTPS requests.
-    """
     statuses = {}
     protocols = ['http', 'https']
 
@@ -27,17 +41,10 @@ def check_accessibility(domain):
         except RequestException as e:
             statuses[protocol] = {'status_code': None, 'error': str(e)}
 
-    return statuses
+    return domain, statuses
 
 def format_output(domain, http_status, https_status):
-    """
-    Formats the output for a single domain in a readable box format.
 
-    Args:
-        domain (str): The domain being checked.
-        http_status (dict): The status information for HTTP.
-        https_status (dict): The status information for HTTPS.
-    """
     http_msg = (f"HTTP: {http_status['status_code']} {http_status['url']}"
                 if http_status['status_code'] else "HTTP: Down")
     https_msg = (f"HTTPS: {https_status['status_code']} {https_status['url']}"
@@ -50,36 +57,29 @@ def format_output(domain, http_status, https_status):
     print("="*50)
 
 def main():
-    """
-    Reads a list of subdomains from a file, checks their accessibility, and writes accessible domains to a file.
-    """
+
     accessible_domains = []
+    subdomains = []
 
     # Read subdomains from file
-    with open('subdomain.txt', 'r') as file:
-        subdomains = file.readlines()
+    with open('all_subdomains.txt', 'r') as file:
+        subdomains = [line.strip() for line in file if line.strip()]
 
-    # Define the delay between requests (in seconds)
-    delay_between_requests = 10  # Adjust as needed
+    # Define the number of threads to use
+    num_threads = 10  # Adjust as needed
 
-    for subdomain in subdomains:
-        subdomain = subdomain.strip() 
+    with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        future_to_domain = {executor.submit(check_accessibility, subdomain): subdomain for subdomain in subdomains}
 
-        if not subdomain:  # Skip empty lines
-            continue
+        for future in as_completed(future_to_domain):
+            domain, statuses = future.result()
+            http_status = statuses.get('http', {'status_code': None})
+            https_status = statuses.get('https', {'status_code': None})
 
-        # Check accessibility of the subdomain
-        statuses = check_accessibility(subdomain)
-        http_status = statuses.get('http', {'status_code': None})
-        https_status = statuses.get('https', {'status_code': None})
-
-        # Determine if either protocol is accessible
-        if http_status['status_code'] == 200 or https_status['status_code'] == 200:
-            accessible_domains.append(subdomain)
-            format_output(subdomain, http_status, https_status)
-
-        # Wait before making the next request
-        time.sleep(delay_between_requests)
+            # Determine if either protocol is accessible
+            if http_status['status_code'] == 200 or https_status['status_code'] == 200:
+                accessible_domains.append(domain)
+                format_output(domain, http_status, https_status)
 
     # Write accessible domains to a file
     with open('updomains.txt', 'w') as file:
