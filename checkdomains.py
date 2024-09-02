@@ -2,52 +2,38 @@ import requests
 from requests.exceptions import RequestException
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
-art = '''
-
-                                                ⠀⠀⡶⠛⠲⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡶⠚⢶⡀⠀
-                                                ⢰⠛⠃⠀⢠⣏⠀⠀⠀⠀⣀⣠⣤⣤⣤⣤⣤⣤⣄⣀⡀⠀⠀⠀⣸⠇⠀⠈⠙⣧
-                                                ⠸⣦⣤⣄⠀⠙⢷⣤⣶⠟⠛⢉⣁⣤⣤⣤⣤⣀⣉⠙⠻⢷⣤⡾⠋⢀⣤⣤⣴⠏
-                                                ⠀⠀⠀⠈⠳⣤⡾⠋⣀⣴⣿⣿⠿⠿⠟⠛⠿⠿⣿⣿⣶⣄⠙⢿⣦⠟⠁⠀⠀⠀
-                                                ⠀⠀⠀⢀⣾⠟⢀⣾⣿⠟⠋⠀⠀⠀⠀⠀⠀⠀⠀⠉⠻⣿⣷⡄⠹⣷⡀⠀⠀⠀
-                                                ⠀⠀⠀⣾⡏⢠⣿⣿⡯⠤⠤⠤⠒⠒⠒⠒⠒⠒⠒⠤⠤⠽⣿⣿⡆⠹⣷⡀⠀⠀
-                                                ⠀⠀⢸⣟⣠⡿⠿⠟⠒⣒⣒⣉⣉⣉⣉⣉⣉⣉⣉⣉⣒⣒⡛⠻⠿⢤⣹⣇⠀⠀
-                                                ⠀⠀⣾⡭⢤⣤⣠⡞⠉⠁⢀⣀⣀⠀⠀⠀⠀⢀⣀⣀⠀⠈⢹⣦⣤⡤⠴⣿⠀⠀
-                                                ⠀⠀⣿⡇⢸⣿⣿⣇⠀⣼⣿⣿⣿⣷⠀⠀⣼⣿⣿⣿⣷⠀⢸⣿⣿⡇⠀⣿⠀⠀
-                                                ⠀⠀⢻⡇⠸⣿⣿⣿⡄⢿⣿⣿⣿⡿⠀⠀⢿⣿⣿⣿⡿⢀⣿⣿⣿⡇⢸⣿⠀⠀
-                                                ⠀⠀⠸⣿⡀⢿⣿⣿⣿⣆⠉⠛⠋⠀⢴⣶⠀⠉⠛⠉⣠⣿⣿⣿⡿⠀⣾⠇⠀⠀
-                                                ⠀⠀⠀⢻⣷⡈⢻⣿⣿⣿⣿⣶⣤⣀⣈⣁⣀⡤⣴⣿⣿⣿⣿⡿⠁⣼⠏⠀⠀⠀
-                                                ⠀⠀⠀⢀⣽⣷⣄⠙⢿⣿⣿⡟⢲⠧⡦⠼⠤⢷⢺⣿⣿⡿⠋⣠⣾⢿⣄⠀⠀⠀
-                                                ⣰⠟⠛⠛⠁⣨⡿⢷⣤⣈⠙⢿⡙⠒⠓⠒⠒⠚⡹⠛⢁⣤⣾⠿⣧⡀⠙⠋⠙⣆
-                                                ⠹⣤⡀⠀⠐⡏⠀⠀⠉⠛⠿⣶⣿⣶⣤⣤⣤⣾⣷⠾⠟⠋⠀⠀⢸⡇⠀⢠⣤⠟
-                                                ⠀⠀⠳⢤⠾⠃⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠁⠀⠀⠀⠀⠀⠀⠘⠷⠤⠾⠁⠀
+from urllib.parse import urlparse
+import re
 
 
- ░▒▓██████▓▒░       ░▒▓███████▓▒░       ░▒▓█▓▒░             ░▒▓█▓▒░      ░▒▓███████▓▒░       ░▒▓████████▓▒░      ░▒▓███████▓▒░  
-░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░             ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░                    ░▒▓█▓▒░ 
-░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░             ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░                    ░▒▓█▓▒░ 
-░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░             ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓██████▓▒░           ░▒▓████▓▒░  
-░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░             ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░                            
-░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░             ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░                            
- ░▒▓██████▓▒░       ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓████████▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓████████▓▒░         ░▒▓█▓▒░     
-                                                                                                                                
-                                                                                                                                
-'''
-
-print(art)
+def is_valid_domain(domain):
+    """Check if the domain is a valid format."""
+    return bool(re.match(r'^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', domain))
 
 def check_accessibility(domain):
     statuses = {}
     protocols = ['http', 'https']
 
+    if not is_valid_domain(domain):
+        # Skip invalid domains
+        return domain, {'http': {'status_code': None, 'error': 'Invalid domain'}, 'https': {'status_code': None, 'error': 'Invalid domain'}}
+
     for protocol in protocols:
         url = f'{protocol}://{domain}'
         try:
-            response = requests.get(url, timeout=10, allow_redirects=True)  # Follow redirects
+            parsed_url = urlparse(url)
+            if not parsed_url.scheme or not parsed_url.netloc:
+                raise ValueError(f"Invalid URL: {url}")
+        except ValueError as e:
+            statuses[protocol] = {'status_code': None, 'error': str(e)}
+            continue
+
+        try:
+            response = requests.get(url, timeout=10, allow_redirects=True)
             statuses[protocol] = {
                 'status_code': response.status_code,
-                'url': response.url,  # Final URL after redirects
-                'headers': dict(response.headers)  # Capture response headers
+                'url': response.url,
+                'headers': dict(response.headers)
             }
         except RequestException as e:
             statuses[protocol] = {'status_code': None, 'error': str(e)}
@@ -55,7 +41,6 @@ def check_accessibility(domain):
     return domain, statuses
 
 def format_output(domain, http_status, https_status):
-
     http_msg = (f"HTTP: {http_status['status_code']} {http_status['url']}"
                 if http_status['status_code'] else "HTTP: Down")
     https_msg = (f"HTTPS: {https_status['status_code']} {https_status['url']}"
@@ -68,7 +53,6 @@ def format_output(domain, http_status, https_status):
     print("="*50)
 
 def main():
-
     accessible_domains = []
     subdomains = []
 
