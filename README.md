@@ -36,3 +36,11 @@ Run the Tool: Execute the script to start checking domains.
 Check Results: Review the updomains.txt file for a list of domains that are accessible over HTTP or HTTPS.
 
 # Example Output
+
+![check](https://github.com/user-attachments/assets/106cec07-1014-408d-88a2-33c45678ee5b)
+
+
+
+
+
+
