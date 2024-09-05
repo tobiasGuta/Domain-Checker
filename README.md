@@ -16,7 +16,7 @@ Features
 
 # You can install the requests library using pip:
 
-pip install requests
+    pip install requests
 
 How It Works
 
