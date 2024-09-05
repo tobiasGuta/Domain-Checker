@@ -17,6 +17,10 @@ Features
 # You can install the requests library using pip:
 
     pip install requests
+    
+ # clone 
+    git clone https://github.com/tobiasGuta/Domain-Checker.git
+    cd Domain-Checker
 
 How It Works
 
