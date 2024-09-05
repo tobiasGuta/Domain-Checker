@@ -18,7 +18,7 @@ Features
 
     pip install requests
     
- # clone 
+ # Clone 
     git clone https://github.com/tobiasGuta/Domain-Checker.git
     cd Domain-Checker
 
