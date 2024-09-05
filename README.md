@@ -31,7 +31,7 @@ Prepare Your Subdomains: List your subdomains in a file named all_subdomains.txt
 Run the Tool: Execute the script to start checking domains.
 
 
-    python domain_checker.py
+    python3 check.py
 
 Check Results: Review the updomains.txt file for a list of domains that are accessible over HTTP or HTTPS.
 
