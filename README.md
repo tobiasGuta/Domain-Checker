@@ -1,7 +1,8 @@
 # Domain Accessibility Checker
 
 This Python tool checks the accessibility of a list of subdomains over HTTP and HTTPS protocols. It performs multi-threaded checks to efficiently handle a large number of domains and outputs the accessible domains to a file.
-Features
+
+# Features
 
     Multi-Threaded Processing: Uses ThreadPoolExecutor to perform domain checks concurrently, speeding up the process.
     Protocol Support: Checks both HTTP and HTTPS protocols to determine if a domain is accessible.
