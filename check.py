@@ -38,9 +38,17 @@ art = '''
 print(art)
 
 def is_valid_domain(domain):
-    """Check if the domain is in a valid format."""
-    pattern = r'^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    """Check if the domain is in a valid format and doesn't contain consecutive dots."""
+    # Regex pattern for valid domain format (no consecutive dots allowed)
+    pattern = r'^[a-zA-Z0-9]+([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]+([a-zA-Z0-9-]*[a-zA-Z0-9])?)*$'
+
+    # Check if domain has consecutive dots
+    if '..' in domain:
+        return False
+    
+    # Check against the regex pattern
     return bool(re.match(pattern, domain))
+
 
 def check_accessibility(domain):
     """Check if the domain is accessible via HTTP and HTTPS."""
